@@ -19,6 +19,7 @@ func (roundTripper *RoundTripper) addHandlersChannels(apiVersion string) {
 	pathChannelID := "/" + resourceChannelID
 	pathChannelIDMessages := fmt.Sprintf("%s/%s", pathChannelID, resourceMessages)
 	pathChannelIDInvites := fmt.Sprintf("%s/%s", pathChannelID, resourceInvites)
+	pathChannelIDMessagesPatch := fmt.Sprintf("%s/%s", pathChannelIDMessages, resourceMessageID)
 
 	getHandlers := subrouter.Methods(http.MethodGet).Subrouter()
 	getHandlers.HandleFunc("", roundTripper.channelsResponseGET)
@@ -34,6 +35,7 @@ func (roundTripper *RoundTripper) addHandlersChannels(apiVersion string) {
 
 	patchChannels := subrouter.Methods(http.MethodPatch).Subrouter()
 	patchChannels.HandleFunc(pathChannelID, roundTripper.channelsResponsePatch)
+	patchChannels.HandleFunc(pathChannelIDMessagesPatch, roundTripper.channelMessagesResponsePatch)
 }
 
 func (roundTripper *RoundTripper) channelsResponseGET(w http.ResponseWriter, r *http.Request) {
@@ -147,6 +149,47 @@ func (roundTripper *RoundTripper) channelMessagesResponsePOST(w http.ResponseWri
 	}
 
 	message.ID = randString()
+
+	message.ChannelID = channelID
+	channel.LastMessageID = message.ID
+	channel.MessageCount++
+	channel.Messages = append(channel.Messages, message)
+
+	err = roundTripper.state.MessageAdd(message)
+	if err != nil {
+		sendError(w, err)
+
+		return
+	}
+
+	sendJSON(w, message)
+}
+
+func (roundTripper *RoundTripper) channelMessagesResponsePatch(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	channelID := vars[resourceChannelIDKey]
+	messageID := vars[resourceMessageIDKey]
+
+	channel, err := roundTripper.state.Channel(channelID)
+	if err != nil {
+		sendError(w, err)
+
+		return
+	}
+
+	message := &discordgo.Message{}
+
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
+	err = dec.Decode(&message)
+	if err != nil {
+		sendError(w, err)
+
+		return
+	}
+
+	message.ID = messageID
 
 	message.ChannelID = channelID
 	channel.LastMessageID = message.ID

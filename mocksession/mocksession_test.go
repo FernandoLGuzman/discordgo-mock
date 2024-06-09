@@ -62,8 +62,8 @@ func newState() (*discordgo.State, error) {
 	)
 
 	botUser := mockuser.New(
-		mockuser.WithID(mockconstants.TestUser+"Bot"),
-		mockuser.WithUsername(mockconstants.TestUser+"Bot"),
+		mockuser.WithID(mockconstants.TestUserBot),
+		mockuser.WithUsername(mockconstants.TestUserBot),
 		mockuser.WithBotFlag(true),
 	)
 

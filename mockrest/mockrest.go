@@ -27,12 +27,20 @@ const (
 	resourceChannelID    = "{" + resourceChannelIDKey + "}"
 	resourceMessages     = "messages"
 	resourceInvites      = "invites"
+	resourceMessageIDKey = "messageID"
+	resourceMessageID    = "{" + resourceMessageIDKey + "}"
 
 	resourceGuilds     = "guilds"
 	resourceGuildIDKey = "guildID"
 	resourceGuildID    = "{" + resourceGuildIDKey + "}"
 
 	resourceMembers = "members"
+
+	resourceInteractions        = "interactions"
+	resourceInteractionIDKey    = "interactionsID"
+	resourceInteractionID       = "{" + resourceInteractionIDKey + "}"
+	resourceInteractionTokenKey = "interactionKey"
+	resourceInteractionToken    = "{" + resourceInteractionTokenKey + "}"
 )
 
 // RoundTripper satisfies http.RoundTripper and handles requests using its
@@ -66,6 +74,7 @@ func NewTransport(state *discordgo.State) http.RoundTripper {
 	roundTripper.addHandlersGuilds(apiVersion)
 	roundTripper.addHandlersChannels(apiVersion)
 	roundTripper.addHandlersUsers(apiVersion)
+	roundTripper.addHandlersInteraction(apiVersion)
 
 	return roundTripper
 }
