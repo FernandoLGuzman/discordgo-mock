@@ -44,6 +44,10 @@ func (roundTripper *RoundTripper) interactionCallbackResponse(w http.ResponseWri
 		return
 	}
 
+	if interaction.Data == nil {
+		interaction.Data = &discordgo.InteractionResponseData{}
+	}
+
 	message := &discordgo.Message{
 		ID:         interactionID,
 		ChannelID:  mockconstants.TestChannel,

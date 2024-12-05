@@ -177,40 +177,33 @@ func (roundTripper *RoundTripper) channelMessagesResponsePatch(w http.ResponseWr
 		return
 	}
 
-	edit := &discordgo.WebhookEdit{}
+	message := &discordgo.Message{}
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 
-	err = dec.Decode(&edit)
+	err = dec.Decode(&message)
 	if err != nil {
 		sendError(w, err)
 
 		return
 	}
 
-	var m *discordgo.Message
+	message.ID = messageID
 
-	for _, message := range channel.Messages {
-		if message.ID != messageID {
-			continue
-		}
+	message.ChannelID = channelID
+	channel.LastMessageID = message.ID
+	channel.MessageCount++
+	channel.Messages = append(channel.Messages, message)
 
-		m = message
-		m.Content = *edit.Content
-		m.Embeds = *edit.Embeds
-		m.Attachments = *edit.Attachments
-		m.Components = *edit.Components
-	}
-
-	err = roundTripper.state.MessageAdd(m)
+	err = roundTripper.state.MessageAdd(message)
 	if err != nil {
 		sendError(w, err)
 
 		return
 	}
 
-	sendJSON(w, m)
+	sendJSON(w, message)
 }
 
 func (roundTripper *RoundTripper) channelInvitesResponsePOST(w http.ResponseWriter, r *http.Request) {
