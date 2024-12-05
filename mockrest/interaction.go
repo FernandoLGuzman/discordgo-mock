@@ -26,6 +26,7 @@ func (roundTripper *RoundTripper) addHandlersInteraction(apiVersion string) {
 func (roundTripper *RoundTripper) interactionCallbackResponse(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	interactionID := vars[resourceInteractionIDKey]
+	interactionToken := vars[resourceInteractionTokenKey]
 
 	interaction := &discordgo.InteractionResponse{}
 
@@ -42,6 +43,10 @@ func (roundTripper *RoundTripper) interactionCallbackResponse(w http.ResponseWri
 		sendError(w, err)
 
 		return
+	}
+
+	if interaction.Data == nil {
+		interaction.Data = &discordgo.InteractionResponseData{}
 	}
 
 	message := &discordgo.Message{
@@ -64,6 +69,11 @@ func (roundTripper *RoundTripper) interactionCallbackResponse(w http.ResponseWri
 		sendError(w, err)
 
 		return
+	}
+
+	roundTripper.interactions[interactionToken] = &discordgo.Interaction{
+		ID:      interactionID,
+		Message: message,
 	}
 
 	w.WriteHeader(http.StatusNoContent)

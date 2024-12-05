@@ -41,6 +41,14 @@ const (
 	resourceInteractionID       = "{" + resourceInteractionIDKey + "}"
 	resourceInteractionTokenKey = "interactionKey"
 	resourceInteractionToken    = "{" + resourceInteractionTokenKey + "}"
+
+	resourceWebhooks            = "webhooks"
+	resourceWebhookIDKey        = "webhookID"
+	resourceWebhookID           = "{" + resourceWebhookIDKey + "}"
+	resourceWebhookTokenKey     = "webhookKey"
+	resourceWebhookToken        = "{" + resourceWebhookTokenKey + "}"
+	resourceWebhookMessageIDKey = "webhookMessageIDKey"
+	resourceWebhookMessageID    = "{" + resourceWebhookMessageIDKey + "}"
 )
 
 // RoundTripper satisfies http.RoundTripper and handles requests using its
@@ -48,6 +56,8 @@ const (
 type RoundTripper struct {
 	router *mux.Router
 	state  *discordgo.State
+	// map of token id to interaction
+	interactions map[string]*discordgo.Interaction
 }
 
 // RoundTrip performs the round trip by routing the request to an appropriate
@@ -65,8 +75,9 @@ func NewTransport(state *discordgo.State) http.RoundTripper {
 	router := mux.NewRouter()
 
 	roundTripper := &RoundTripper{
-		router: router,
-		state:  state,
+		router:       router,
+		state:        state,
+		interactions: make(map[string]*discordgo.Interaction),
 	}
 
 	apiVersion := "/api/v" + discordgo.APIVersion
@@ -75,6 +86,7 @@ func NewTransport(state *discordgo.State) http.RoundTripper {
 	roundTripper.addHandlersChannels(apiVersion)
 	roundTripper.addHandlersUsers(apiVersion)
 	roundTripper.addHandlersInteraction(apiVersion)
+	roundTripper.addHandlersWebhooks(apiVersion)
 
 	return roundTripper
 }
