@@ -2,6 +2,7 @@ package mockrest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,8 +26,7 @@ func (roundTripper *RoundTripper) addHandlersWebhooks(apiVersion string) {
 
 func (roundTripper *RoundTripper) webhooksMessagesResponsePatch(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	// webhookID := vars[resourceWebhookIDKey]
-	// webhookToken := vars[resourceWebhookTokenKey]
+	webhookToken := vars[resourceWebhookTokenKey]
 	webhookMessageID := vars[resourceWebhookMessageIDKey]
 
 	webhook := &discordgo.WebhookEdit{}
@@ -46,28 +46,30 @@ func (roundTripper *RoundTripper) webhooksMessagesResponsePatch(w http.ResponseW
 		return
 	}
 
-	if webhook.Content == nil {
-		emptyString := ""
-		webhook.Content = &emptyString
-	}
-	if webhook.Embeds == nil {
-		webhook.Embeds = &[]*discordgo.MessageEmbed{}
-	}
-	if webhook.Components == nil {
-		webhook.Components = &[]discordgo.MessageComponent{}
-	}
-	if webhook.Attachments == nil {
-		webhook.Attachments = &[]*discordgo.MessageAttachment{}
+	i, ok := roundTripper.interactions[webhookToken]
+	if !ok {
+		sendError(w, errors.New("interaction token not found"))
+
+		return
 	}
 
-	message := &discordgo.Message{
-		ID:          webhookMessageID,
-		ChannelID:   mockconstants.TestChannel,
-		GuildID:     mockconstants.TestGuild,
-		Content:     *webhook.Content,
-		Embeds:      *webhook.Embeds,
-		Components:  *webhook.Components,
-		Attachments: *webhook.Attachments,
+	message := i.Message
+	message.ID = webhookMessageID
+
+	if webhook.Content != nil {
+		message.Content = *webhook.Content
+	}
+
+	if webhook.Embeds != nil {
+		message.Embeds = *webhook.Embeds
+	}
+
+	if webhook.Components != nil {
+		message.Components = *webhook.Components
+	}
+
+	if webhook.Attachments != nil {
+		message.Attachments = *webhook.Attachments
 	}
 
 	channel.LastMessageID = message.ID
