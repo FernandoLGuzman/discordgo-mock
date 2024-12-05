@@ -46,13 +46,28 @@ func (roundTripper *RoundTripper) webhooksMessagesResponsePatch(w http.ResponseW
 		return
 	}
 
+	if webhook.Content == nil {
+		emptyString := ""
+		webhook.Content = &emptyString
+	}
+	if webhook.Embeds == nil {
+		webhook.Embeds = &[]*discordgo.MessageEmbed{}
+	}
+	if webhook.Components == nil {
+		webhook.Components = &[]discordgo.MessageComponent{}
+	}
+	if webhook.Attachments == nil {
+		webhook.Attachments = &[]*discordgo.MessageAttachment{}
+	}
+
 	message := &discordgo.Message{
-		ID:         webhookMessageID,
-		ChannelID:  mockconstants.TestChannel,
-		GuildID:    mockconstants.TestGuild,
-		Content:    *webhook.Content,
-		Embeds:     *webhook.Embeds,
-		Components: *webhook.Components,
+		ID:          webhookMessageID,
+		ChannelID:   mockconstants.TestChannel,
+		GuildID:     mockconstants.TestGuild,
+		Content:     *webhook.Content,
+		Embeds:      *webhook.Embeds,
+		Components:  *webhook.Components,
+		Attachments: *webhook.Attachments,
 	}
 
 	channel.LastMessageID = message.ID
